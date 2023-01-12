@@ -17,9 +17,12 @@ jobs:
         display: [cu2, cu3]
         custom: [std]
         include:
-          - target: esp32c3
+          - target: esp32
             display: cu3
             custom: mike
+          - target: esp32
+            display: cu3
+            custom: wroom2xrelay
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
@@ -27,10 +30,14 @@ jobs:
         submodules: 'recursive'
 
     # We should be able to use SDKCONFIG_DEFAULTS, but it seems to be broken, this also works.
-    - run: cat sdkconfig.${{ matrix.display }} >> sdkconfig.defaults.${{ matrix.target }}
+    # The echo makes sure there is a newline inbetween the original, and added part
+    - run: echo >> sdkconfig.defaults.${{ matrix.target }}; cat sdkconfig.${{ matrix.display }} >> sdkconfig.defaults.${{ matrix.target }}
 
     - if: ${{ matrix.custom != 'std' }}
-      run: cat sdkconfig.${{ matrix.custom }} >> sdkconfig.defaults.${{ matrix.target }}
+      run: echo >> sdkconfig.defaults.${{ matrix.target }}; cat sdkconfig.${{ matrix.custom }} >> sdkconfig.defaults.${{ matrix.target }}
+
+    # Show used config
+    - run: cat sdkconfig.defaults.${{ matrix.target }}
 
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1

@@ -10,32 +10,33 @@
 // The amount of button updates (100ms) each for a long press
 #define LONG_PRESS_UPDATES 50
 
+static const int CHECK_BUTTON_BIT = BIT0;
+
 static TimerHandle_t buttonCheckTimer;
 
+static EventGroupHandle_t displayEventGroupHandle;
 static EventGroupHandle_t _eventGroupHandle;
 
 static int _buttonModeShortPressBit;
 static int _buttonModeLongPressBit;
 static int _buttonLightShortPressBit;
 static int _buttonLightLongPressBit;
-static int _checkButtonBit;
 static int _ignoreHeldBit;
 
-static void buttonCheckTimerCallback(TimerHandle_t xTimer) { xEventGroupSetBits(_eventGroupHandle, _checkButtonBit); }
+static void buttonCheckTimerCallback(TimerHandle_t xTimer) { xEventGroupSetBits(_eventGroupHandle, CHECK_BUTTON_BIT); }
 
 void initCu2(EventGroupHandle_t eventGroupHandle,
              const int buttonModeShortPressBit,
              const int buttonModeLongPressBit,
              const int buttonLightShortPressBit,
              const int buttonLightLongPressBit,
-             const int checkButtonBit,
              const int ignoreHeldBit) {
+    displayEventGroupHandle = xEventGroupCreate();
     _eventGroupHandle = eventGroupHandle;
     _buttonModeShortPressBit = buttonModeShortPressBit;
     _buttonModeLongPressBit = buttonModeLongPressBit;
     _buttonLightShortPressBit = buttonLightShortPressBit;
     _buttonLightLongPressBit = buttonLightLongPressBit;
-    _checkButtonBit = checkButtonBit;
     _ignoreHeldBit = ignoreHeldBit;
 
     buttonCheckTimer = xTimerCreate("buttonCheckTimer", (100 / portTICK_PERIOD_MS), pdTRUE, (void *)0, buttonCheckTimerCallback);
@@ -107,7 +108,11 @@ void startButtonCheck() { xTimerStart(buttonCheckTimer, 0); }
 
 void stopButtonCheck() { xTimerStop(buttonCheckTimer, 0); }
 
-static uint32_t digits(uint32_t value, size_t digits, size_t atleast) {
+void ignorePress() {
+    xEventGroupSetBits(_eventGroupHandle, _ignoreHeldBit); 
+}
+
+uint32_t digits(uint32_t value, size_t digits, size_t atleast) {
     uint32_t result = 0;
     uint32_t divider = 1;
     for(int pos = 0; pos < digits; pos++) {
@@ -118,14 +123,20 @@ static uint32_t digits(uint32_t value, size_t digits, size_t atleast) {
     return result;
 }
 
-void showState(uint8_t level, bool lightOn, uint16_t speed, uint32_t trip) {
-    uint16_t numTop = digits(speed, 3, 2);
-    uint32_t numBottom = digits(trip / 100, 5, 1);
-    displayUpdate(false, (assist_level)level, BLNK_SOLID, BLNK_OFF, BLNK_OFF, BLNK_SOLID, lightOn ? BLNK_SOLID : BLNK_OFF, BLNK_SOLID, BLNK_OFF, BLNK_SOLID, BLNK_SOLID, BLNK_SOLID,
-                  false, 50, numTop, numBottom);
+bool cu2HandleDisplayUpdate() {
+    EventBits_t bitsToCheck = CHECK_BUTTON_BIT;
+
+    EventBits_t bits = xEventGroupWaitBits(displayEventGroupHandle, bitsToCheck, false, false, 0);
+    if((bits & CHECK_BUTTON_BIT) != 0) {
+        xEventGroupClearBits(displayEventGroupHandle, CHECK_BUTTON_BIT);
+        buttonCheck();
+        return true;
+    }
+
+    return false;
 }
 
-void displayUpdate(bool setDefault,
+void displayUpdateCu2(bool setDefault,
                    assist_level assistLevel,
                    blink_speed assistBlink,
                    blink_speed wrench,
@@ -138,7 +149,7 @@ void displayUpdate(bool setDefault,
                    blink_speed top,
                    blink_speed bottom,
                    bool miles,
-                   uint8_t battery,
+                   uint8_t batPercentage,
                    uint16_t topVal,
                    uint32_t bottomVal) {
     uint8_t assist = assistBlink;
@@ -156,6 +167,6 @@ void displayUpdate(bool setDefault,
     uint8_t numBottom2 = (uint8_t)(bottomVal >> 8);
     uint8_t numBottom3 = (uint8_t)(bottomVal >> 0);
 
-    uint8_t payload[] = {assist, segments1, segments2, battery, numTop1, numTop2, numBottom1, numBottom2, numBottom3};
+    uint8_t payload[] = {assist, segments1, segments2, batPercentage, numTop1, numTop2, numBottom1, numBottom2, numBottom3};
     exchange(cmdReq(MSG_DISPLAY, MSG_BMS, (uint8_t)(setDefault ? 0x27 : 0x26), payload, sizeof(payload)));
 }

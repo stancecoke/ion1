@@ -1,7 +1,49 @@
+# Configuration for use with T-01C3: https://github.com/Xinyuan-LilyGO/T-01C3
+#
+# Pins:
+# Pin# from schematic(GPIO#) - Name on (ESP-01) breakout board - Name on T-01C3 board
+# 1(--) - GND  - GND
+# 2(02) - GP2  - IO2 > Optional ADC use for battery level
+# 3(09) - GP0  - IO9 > Motor on/off (active low)
+# 4(20) - RXD  - RX  > Bus send
+# 5(21) - TXD  - TX  > Light on/off (active high) + jumper for debug
+# 6(08) - CHPD - IO8 > Bus receive
+# 7(--) - RST  - RST
+# 8(--) - VCC  - 3.3V
+
+
 CONFIG_ION_BUTTON=n
 CONFIG_ION_LED_PIN=3
 CONFIG_ION_UART=1
 CONFIG_ION_RXD=8
-CONFIG_ION_TXD=2
+CONFIG_ION_TXD=20
+
+CONFIG_ION_LIGHT=y
+CONFIG_ION_LIGHT_PIN=21
+CONFIG_ION_LIGHT_PIN_INVERTED=n
+
+CONFIG_ION_RELAY=y
+CONFIG_ION_RELAY_PIN=9
+CONFIG_ION_RELAY_PIN_INVERTED=y
 
 CONFIG_ESP32C3_DEFAULT_CPU_FREQ_160=y
+
+CONFIG_ION_ADC=y
+
+# Voltage dividers with a factor of 16 tend to be easy to find resistors for:
+# 150k & 10k
+# 180k & 12k
+# 240k & 16k
+# 270k & 18k
+# 300k & 20k
+# 330k & 22k
+# 360k & 24k
+
+# The scale of the divider, times 1000
+CONFIG_ION_DIVIDER_SCALE=16000
+
+# Consider 32V (3.2V/cell for 10s) empty
+CONFIG_ION_ADC_EMPTY_MV=32000
+
+# Consider 42V (4.2V/cell for 10s) full
+CONFIG_ION_ADC_FULL_MV=42000

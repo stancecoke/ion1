@@ -31,6 +31,14 @@ menu "Sparta Ion Config"
         bool "Motor relay pin low for on"
         default n
 
+    config ION_CHARGE
+        bool "Enable pin to switch to charging mode"
+        default n
+
+    config ION_CHARGE_PIN
+        int "Charge input pin"
+        default 35
+
     config ION_CU2
         bool "Enable CU2 display support"
         default y
@@ -50,5 +58,21 @@ menu "Sparta Ion Config"
     config ION_TXD
         int "Send pin connected to bus"
         default 17
+
+    config ION_ADC
+        bool "Enable ADC for battery voltage measurement"
+        default n
+
+    config ION_DIVIDER_SCALE
+        int "The division of the voltage divider, times 1000. For example 150k & 10k resistor is: ((150 + 10) / 10) * 1000 = 16000."
+        default 16000
+
+    config ION_ADC_EMPTY_MV
+        int "The actual battery voltage in mv for empty (=0%). For example 32000mv for a 10s battery"
+        default 32000
+
+    config ION_ADC_FULL_MV
+        int "The actual battery voltage in mv for full (=100%). For example 42000mv for a 10s battery"
+        default 42000
 
 endmenu

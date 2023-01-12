@@ -12,7 +12,6 @@ void initCu2(EventGroupHandle_t eventGroupHandle,
              const int buttonModeLongPressBit,
              const int buttonLightShortPressBit,
              const int buttonLightLongPressBit,
-             const int checkButtonBit,
              const int ignoreHeldBit);
 
 void buttonCheck();
@@ -21,9 +20,18 @@ void startButtonCheck();
 
 void stopButtonCheck();
 
-void showState(uint8_t level, bool lightOn, uint16_t speed, uint32_t trip);
+void ignorePress();
 
-void displayUpdate(bool setDefault,
+bool cu2HandleDisplayUpdate();
+
+/**
+ * Convert the given value to a value where each hexidecimal position shows a digit of the original value.
+ * @param digits the maximum amount of digits to convert.
+ * @param atleast the minimum amount of digits (in case of a 0 input value)
+ */
+uint32_t digits(uint32_t value, size_t digits, size_t atleast);
+
+void displayUpdateCu2(bool setDefault,
                    assist_level assistLevel,
                    blink_speed assistBlink,
                    blink_speed wrench,
@@ -36,6 +44,6 @@ void displayUpdate(bool setDefault,
                    blink_speed top,
                    blink_speed bottom,
                    bool miles,
-                   uint8_t battery,
+                   uint8_t batPercentage,
                    uint16_t topVal,
                    uint32_t bottomVal);
